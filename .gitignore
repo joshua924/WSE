@@ -3,3 +3,4 @@ data/index/**
 .metadata
 .project
 /bin/
+*.DS_Store
