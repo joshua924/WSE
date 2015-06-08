@@ -3,8 +3,10 @@ package edu.nyu.cs.sz1288;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Scanner;
-
 
 /**
  * This class is added after the delivery of this project
@@ -14,29 +16,36 @@ import java.util.Scanner;
  *
  */
 public class QuerySpellingCorrection {
-	private String filePosition = "queries.tsv";
+	private String filePosition = "data/simple/smallWordList.txt";
 	private ArrayList<String> queryWords = new ArrayList<String>();
 	private ArrayList<Short> wordLength = new ArrayList<Short>();
-	private ArrayList<Character> startingChar = new ArrayList<Character>();;
+	private ArrayList<Character> startingChar = new ArrayList<Character>();
+	private ArrayList<String> sounds = new ArrayList<String>();
 	
 	public QuerySpellingCorrection() {
+		System.out.println("Loading word file ...");
+		long before = System.currentTimeMillis();
+		HashSet<String> hs = new HashSet<String>();
 		// read in query log or dictionary
 		File f = new File(filePosition);
 		try {
 			Scanner sc = new Scanner(f);
 			while (sc.hasNextLine()) {
 				String line = sc.nextLine();
-				if (!line.equals("")){
+				if (!line.equals("") && !hs.contains(line)){
+					hs.add(line);
 					queryWords.add(line);
+					sounds.add(SoundEx.soundExEncode(line));
 					wordLength.add((short) line.length());
 					startingChar.add(line.charAt(0));
 				}
 			}
-			sc.close();
+		sc.close();
+		long after = System.currentTimeMillis();
+		System.out.println("Loading time " + (after - before) + " for word size " + queryWords.size());
 		} catch (FileNotFoundException e) {
 			System.out.println("File path not valid!");
 		}
-		
 	}
 	
 	public int editDistance (String query, String candidate) {                          
@@ -79,26 +88,80 @@ public class QuerySpellingCorrection {
 	    return cost[len0 - 1];                                                          
 	}
 	
-	public String simpleGetSuggestions(String query) {
-		String bestMatch = "";
+	public ArrayList<String> restrainedGetSuggestion(String query) {
+		ArrayList<String> bestMatch1 = new ArrayList<String>();
+		HashMap<String, Short> hm = new HashMap<String, Short>();
 		short min = Short.MAX_VALUE;
-		for (String w : queryWords) {
-			short temp = (short) editDistance(query, w);
-			if (temp <= min) {
-				min = temp;
-				bestMatch = w;
+		char s = query.charAt(0);
+		short len = (short) query.length();
+		for (int i=0; i<queryWords.size(); i++) {
+			if (startingChar.get(i) == s){
+				if (Math.abs(len - wordLength.get(i)) < min) {
+					String w = queryWords.get(i);
+					short temp = (short) editDistance(query, w);
+					hm.put(queryWords.get(i), temp);
+					if (temp < min) {
+						min = temp;
+					}
+				}
 			}
 		}
-		return bestMatch;
+		Iterator<String> it = hm.keySet().iterator();
+		while(it.hasNext()){
+			String key = (String) it.next();
+			if (hm.get(key) == min)
+				bestMatch1.add(key);
+		}
+		// use sound code
+		ArrayList<String> bestMatch2 = new ArrayList<String>();
+		hm = new HashMap<String, Short>();
+		min = Short.MAX_VALUE;
+		s = query.charAt(0);
+		len = (short) query.length();
+		for (int i=0; i<queryWords.size(); i++) {
+			if (startingChar.get(i) == s){
+				if (Math.abs(len - wordLength.get(i)) < min) {
+					String w = queryWords.get(i);
+					short temp = (short) editDistance(query, w);
+					hm.put(queryWords.get(i), temp);
+					if (temp < min) {
+						min = temp;
+					}
+				}
+			}
+		}
+		it = hm.keySet().iterator();
+		while(it.hasNext()){
+			String key = (String) it.next();
+			if (hm.get(key) == min)
+				bestMatch2.add(key);
+		}
+		bestMatch2 = new ArrayList<String>(hm.keySet());
+		bestMatch1.retainAll(bestMatch2);
+		return bestMatch1;
+	}
+	
+	private static String printList(ArrayList<String> res) {
+		String ret = "";
+		for (String s : res) {
+			ret += s + ", ";
+		}
+		return ret;
 	}
 	
 	public static void main(String[] args) {
 		QuerySpellingCorrection qsc = new QuerySpellingCorrection();
-		long before = System.currentTimeMillis();
-		String res = qsc.simpleGetSuggestions("salal");
-		long after = System.currentTimeMillis();
-		System.out.println("Simple Suggestion running time: " + (after - before));
-		System.out.println("Simple Suggestion returns: " + res);
+		System.out.print(">");
+		Scanner reader = new Scanner(System.in);
+		String tmp = "";
+		while (!(tmp = reader.nextLine()).equals("quit")){
+			long before = System.currentTimeMillis();
+			ArrayList<String> res = qsc.restrainedGetSuggestion(tmp);
+			long after = System.currentTimeMillis();
+			System.out.println("Simple Suggestion running time: " + (after - before));
+			System.out.println("Simple Suggestion returns: " + printList(res));
+			System.out.print(">");
+		}
+		reader.close();
 	}
-
 }
