@@ -72,31 +72,4 @@ class Trie implements Serializable{
       if(root.word != null) result.add(new Pair<String, Integer>(root.word, root.freq));
     }
   }
-
-  public static void main(String[] args) {
-    Trie mytrie = new Trie();
-    mytrie.insert("Calvin");
-    mytrie.insert("Carl");
-    mytrie.insert("Tin");
-    mytrie.insert("Tim");
-    mytrie.insert("Carlos");
-    mytrie.insert("Carlos");
-    mytrie.insert("Carlos");
-    mytrie.insert("Carlos");
-    mytrie.insert("Carlo");
-    mytrie.insert("ABC");
-    mytrie.insert("AB");
-    mytrie.insert("A");
-    // read copcus from standard input
-    Scanner kb = new Scanner(System.in);
-    while(kb.hasNext()) {
-      mytrie.insert(kb.next());
-    }
-    //set query word
-    String query = "";
-    List<Pair<String, Integer>> result = mytrie.query(query);
-    //print out result
-    for(Pair<String, Integer> s: result) System.out.println(s.first + " " + s.second);
-  }
-
 }

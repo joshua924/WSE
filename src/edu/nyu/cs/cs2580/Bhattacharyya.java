@@ -12,9 +12,7 @@ import java.util.Vector;
 import java.util.Map.Entry;
 
 /**
- * 
  * @author Joshua
- *
  */
 public class Bhattacharyya {
 	public void computeQueries(String prf, String output) throws IOException{
